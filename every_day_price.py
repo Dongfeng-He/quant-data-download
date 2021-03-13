@@ -123,6 +123,23 @@ def get_day_st(security, date):
     return data_df
 
 
+# 获取单一股票单日沪股通（北向资金）持股数量、持股比例
+# share_number(持股数量), share_ratio(持股比例)
+def get_sct_share(security, date):
+    # 持股数量、持股比例
+    fields = ["share_number", "share_ratio"]
+    table = jq.finance.STK_HK_HOLD_INFO
+    cond1 = jq.finance.STK_HK_HOLD_INFO.link_id == "310001"   # 沪股通
+    cond2 = jq.finance.STK_HK_HOLD_INFO.day == date
+    cond3 = jq.finance.STK_HK_HOLD_INFO.code == security
+    query = jq.query(table).filter(cond1, cond2, cond3).limit(10)
+    data_df = jq.finance.run_query(query)
+    if len(data_df) != 1:
+        return pd.DataFrame({field: [] for field in fields})
+    result_df = data_df[fields]
+    return result_df
+
+
 def get_day_info(security, date):
     df_list = []
     df_list.append(get_day_price(security, date))
@@ -132,6 +149,7 @@ def get_day_info(security, date):
     df_list.append(get_day_concept(security, date))
     df_list.append(get_day_call_auction(security, date))
     df_list.append(get_day_money_flow(security, date))
+    df_list.append(get_sct_share(security, date))
     df = pd.concat(df_list, axis=1)
     print()
 
@@ -143,5 +161,7 @@ security = "000001.XSHE"
 # date = "2015-03-01"
 # date = "2015-03-02"
 date = "2015-03-02"
+
+date = "2018-03-02"
 res = get_day_info(security, date)
 print()
