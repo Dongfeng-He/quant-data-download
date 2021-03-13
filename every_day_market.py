@@ -1,3 +1,4 @@
+# 每日大盘信息（不分股票）
 import jqdatasdk as jq
 from conf.common_conf import *
 from conf.jq_factor_conf import *
@@ -11,7 +12,9 @@ import os
 
 auth(USER_NAME, PASSWORD)
 
-
+def 
+# 市场代码，分别为上海市场、上海A股、上海B股、深圳市场、深圳主板、中小企业板、创业板
+fields = ["322001", "322002", "322003", "322004", "322005", "322006", "322007", ]
 
 table = jq.finance.STK_EXCHANGE_TRADE_INFO
 cond1 = jq.finance.STK_EXCHANGE_TRADE_INFO.exchange_code == '322001'
@@ -19,6 +22,9 @@ cond2 = jq.finance.STK_EXCHANGE_TRADE_INFO.date == '2015-01-07'
 query = jq.query(table).filter(cond1, cond2).limit(10)
 df = jq.finance.run_query(query)
 print()
+
+
+
 
 
 
