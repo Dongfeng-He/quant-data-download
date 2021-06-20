@@ -11,9 +11,6 @@ import time
 import os
 
 
-auth(USER_NAME, PASSWORD)
-
-
 # 获取单一股票每日市值数据
 # 传入date时, 查询指定日期date所能看到的最近(对市值表来说, 最近一天, 对其他表来说, 最近一个季度)的数据, 我们会查找上市公司在这个日期之前(包括此日期)发布的数据, 不会有未来函数
 # 回测模块: 默认值会随着回测日期变化而变化, 等于context.current_dt的前一天(实际生活中我们只能看到前一天的财报和市值数据, 所以要用前一天)
@@ -52,9 +49,8 @@ def get_finance_indicator(code_list, date):
     return result_df
 
 
+if __name__ == "__main__":
+    auth(USER_NAME, PASSWORD)
 
 
 
-
-a = get_finance_forecast(["300015.XSHE", "000002.XSHE", "000022.XSHE", "000012.XSHE"], "2018-03-02")
-print()

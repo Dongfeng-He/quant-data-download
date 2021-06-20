@@ -12,35 +12,6 @@ import os
 import math
 
 
-jq.auth(USER_NAME, PASSWORD)
-
-
-# 把开始和结束时间区间分割成多个 list
-def get_span_list(start_date, end_date, span):
-    start_date = datetime.strptime(start_date, "%Y-%m-%d")
-    end_date = datetime.strptime(end_date, "%Y-%m-%d")
-    date_pair_list = []
-    current_date = start_date + timedelta(days=span-1)
-    while current_date < end_date:
-        date_pair_list.append([start_date.strftime("%Y-%m-%d"), current_date.strftime("%Y-%m-%d")])
-        start_date += timedelta(days=span)
-        current_date += timedelta(days=span)
-    else:
-        date_pair_list.append([start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")])
-    return date_pair_list
-
-
-# 把开始和结束时间区间转化成日期列表，以适配 alpha101、alpha191 入参
-def get_date_list(start_date, end_date):
-    start_date = datetime.strptime(start_date, "%Y-%m-%d")
-    end_date = datetime.strptime(end_date, "%Y-%m-%d")
-    date_list = []
-    while start_date <= end_date:
-        date_list.append(start_date.strftime("%Y-%m-%d"))
-        start_date += timedelta(days=1)
-    return date_list
-
-
 # 打印所有聚宽因子库因子，以生成 FACTOR_NAME_LIST 列表
 def display_all_jq_factors():
     all_factors = jq.get_all_factors()
@@ -295,56 +266,57 @@ def save_jq_factor(file_dir, security_list, start_date, end_date, span):
         factor_df.to_csv(os.path.join(file_dir, file_name))
 
 
-download_type = "alpha191"     # alpha101 alpha191 jq_factor
+if __name__ == "__main__":
+    auth(USER_NAME, PASSWORD)
+    download_type = "alpha191"     # alpha101 alpha191 jq_factor
+    if download_type == "alpha101":
+        file_dir = "/Users/hedongfeng/Desktop/jq_local_data/alpha101/2015-2021"
+        security_list = SECURITY_LIST
+        start_date = "2018-10-08"
+        end_date = "2018-10-09"
+        span = 1
+        save_alpha101_factor(file_dir, security_list, start_date, end_date, span)
+    elif download_type == "alpha191":
+        file_dir = "/Users/hedongfeng/Desktop/jq_local_data/alpha191/2015-2021"
+        security_list = SECURITY_LIST
+        start_date = "2020-12-12"
+        end_date = "2021-03-08"
+        span = 1
+        save_alpha191_factor(file_dir, security_list, start_date, end_date, span)
+    elif download_type == "jq_factor":
+        file_dir = "/Users/hedongfeng/Desktop/jq_local_data/jq_factor/2015-2021"
+        security_list = SECURITY_LIST
+        start_date = "2020-12-12"
+        end_date = "2021-03-08"
+        span = 1
+        save_jq_factor(file_dir, security_list, start_date, end_date, span)
 
-if download_type == "alpha101":
-    file_dir = "/Users/hedongfeng/Desktop/jq_local_data/alpha101/2015-2021"
-    security_list = SECURITY_LIST
-    start_date = "2018-10-08"
-    end_date = "2018-10-09"
-    span = 1
-    save_alpha101_factor(file_dir, security_list, start_date, end_date, span)
-elif download_type == "alpha191":
-    file_dir = "/Users/hedongfeng/Desktop/jq_local_data/alpha191/2015-2021"
-    security_list = SECURITY_LIST
-    start_date = "2020-12-12"
-    end_date = "2021-03-08"
-    span = 1
-    save_alpha191_factor(file_dir, security_list, start_date, end_date, span)
-elif download_type == "jq_factor":
-    file_dir = "/Users/hedongfeng/Desktop/jq_local_data/jq_factor/2015-2021"
-    security_list = SECURITY_LIST
-    start_date = "2020-12-12"
-    end_date = "2021-03-08"
-    span = 1
-    save_jq_factor(file_dir, security_list, start_date, end_date, span)
 
 
+    # 多线程下载
+    # security = "300015.XSHE"
+    # security_list = ["000001.XSHE", "000002.XSHE", "300015.XSHE"]
+    # start_date = "2019-01-03"
+    # end_date = "2019-01-14"
 
-# 多线程下载
-# security = "300015.XSHE"
-# security_list = ["000001.XSHE", "000002.XSHE", "300015.XSHE"]
-# start_date = "2019-01-03"
-# end_date = "2019-01-14"
-
-# now = time.time()
-# pool = Pool(processes=4)
-# apply_results = []
-# for i in range(4):
-#     apply_results.append(pool.apply_async(get_multiple_alpha191_factor_values, (security_list, start_date, end_date)))
-# pool.close()
-# pool.join()
-# result_list = []
-# for res in apply_results:
-#     result = res.get()
-#     result_list.append(result)
-# print(time.time() - now)
-# factor_values = get_single_jq_factor_values(security, start_date, end_date)
-# alpha_001 = jq.alpha101.alpha_001('2015-12-24',['000001.XSHE','000002.XSHE'])
-# a = eval("jq.alpha101.alpha_001")('2015-12-24',['000001.XSHE','000002.XSHE'])
-# get_single_alpha191_factor_values(security, start_date, end_date)
-# now = time.time()
-# get_multiple_alpha191_factor_values(security_list, start_date, end_date)
-# print(time.time() - now)
-# jq.alpha101.
-# print()
+    # now = time.time()
+    # pool = Pool(processes=4)
+    # apply_results = []
+    # for i in range(4):
+    #     apply_results.append(pool.apply_async(get_multiple_alpha191_factor_values, (security_list, start_date, end_date)))
+    # pool.close()
+    # pool.join()
+    # result_list = []
+    # for res in apply_results:
+    #     result = res.get()
+    #     result_list.append(result)
+    # print(time.time() - now)
+    # factor_values = get_single_jq_factor_values(security, start_date, end_date)
+    # alpha_001 = jq.alpha101.alpha_001('2015-12-24',['000001.XSHE','000002.XSHE'])
+    # a = eval("jq.alpha101.alpha_001")('2015-12-24',['000001.XSHE','000002.XSHE'])
+    # get_single_alpha191_factor_values(security, start_date, end_date)
+    # now = time.time()
+    # get_multiple_alpha191_factor_values(security_list, start_date, end_date)
+    # print(time.time() - now)
+    # jq.alpha101.
+    # print()

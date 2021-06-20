@@ -11,9 +11,6 @@ import time
 import os
 
 
-auth(USER_NAME, PASSWORD)
-
-
 # 获取上海、深圳每日交易信息
 # total_market_cap(总市值列表)、circulating_market_cap(流通市值列表)、volume(成交股数列表)、money(成交金额列表)、deal_number(交易笔数列表)、pe_average(平均市盈率列表)、turnover_ratio(换手率列表)
 def get_sz_sh_trade_info(date):
@@ -86,4 +83,6 @@ def get_day_info(date):
     print()
 
 
-get_day_info("2015-03-02")
+if __name__ == "__main__":
+    auth(USER_NAME, PASSWORD)
+    get_day_info("2015-03-02")

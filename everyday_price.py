@@ -11,9 +11,6 @@ import time
 import os
 
 
-auth(USER_NAME, PASSWORD)
-
-
 # 获取单一股票单日融资融券信息
 # fin_value(融资余额), fin_buy_value(融资买入额), fin_refund_value(融资偿还额), sec_value(融券余量), sec_sell_value(融券卖出量), sec_refund_value(融券偿还量), fin_sec_value(融资融券余额)
 def get_day_mtss(security, date):
@@ -25,36 +22,6 @@ def get_day_mtss(security, date):
         return pd.DataFrame({col: [] for col in fields})
     data_df.index = [0]
     data_df.columns = fields
-    return data_df
-
-
-# 获取单一股票单日所属行业，每列以 "行业代码_行业名字" 表示
-# sw_l1(申万一级行业), sw_l2(申万二级行业), sw_l3(申万三级行业), zjw(证监会行业), jq_l2(聚宽二级行业), jq_l1(聚宽一级行业)
-def get_day_industry(security, date):
-    fields = ["sw_l1", "sw_l2", "sw_l3", "zjw", "jq_l2", "jq_l1"]
-    data_dict = jq.get_industry(security, date=date)
-    # 即使在不开盘的日期也能有返回值
-    if len(data_dict) == 0 or security not in data_dict:
-        return pd.DataFrame({col: [] for col in fields})
-    data_df = pd.DataFrame(columns=fields)
-    for field in fields:
-        industry = "{}_{}".format(data_dict[security][field]["industry_code"], data_dict[security][field]["industry_name"])
-        data_df[field] = [industry]
-    return data_df
-
-
-# 获取单一股票单日所属概念板块，以 "概念代码1_概念名字1|概念代码2_概念名字2..." 表示
-# jq_concept(聚宽概念板块列表)
-def get_day_concept(security, date):
-    data_dict = jq.get_concept(security, date=date)
-    # 即使在不开盘的日期也能有返回值
-    if len(data_dict) == 0 or security not in data_dict:
-        return pd.DataFrame({"jq_concept": []})
-    concept_list = ["{}_{}".format(d["concept_code"], d["concept_name"]) for d in data_dict[security]["jq_concept"]]
-    concept = "|".join(concept_list)
-    if len(concept) == 0:
-        return pd.DataFrame({"jq_concept": []})
-    data_df = pd.DataFrame({"jq_concept": [concept]})
     return data_df
 
 
@@ -145,8 +112,6 @@ def get_day_info(security, date):
     df_list.append(get_day_price(security, date))
     df_list.append(get_day_st(security, date))
     df_list.append(get_day_mtss(security, date))
-    df_list.append(get_day_industry(security, date))
-    df_list.append(get_day_concept(security, date))
     df_list.append(get_day_call_auction(security, date))
     df_list.append(get_day_money_flow(security, date))
     df_list.append(get_sct_share(security, date))
@@ -154,14 +119,17 @@ def get_day_info(security, date):
     print()
 
 
-security = "000001.XSHE"
-# "300015.XSHE" 爱尔眼科
-# "2015-03-01" 可测试返回空, "2015-03-01" 可测试正常数据
-# "2019-07-15"
-# date = "2015-03-01"
-# date = "2015-03-02"
-date = "2015-03-02"
+if __name__ == "__main__":
+    auth(USER_NAME, PASSWORD)
 
-date = "2018-03-02"
-res = get_day_info(security, date)
-print()
+    security = "000001.XSHE"
+    # "300015.XSHE" 爱尔眼科
+    # "2015-03-01" 可测试返回空, "2015-03-01" 可测试正常数据
+    # "2019-07-15"
+    # date = "2015-03-01"
+    # date = "2015-03-02"
+    date = "2015-03-02"
+
+    date = "2018-03-02"
+    res = get_day_info(security, date)
+    print()

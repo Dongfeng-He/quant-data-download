@@ -11,9 +11,6 @@ import time
 import os
 
 
-auth(USER_NAME, PASSWORD)
-
-
 # 获取单一股票不定期公布的员工信息，包括在职人数、退休人数、研究生比例、大学生比例、中专生比例
 # 原始表里的 end_date 应该是统计时的结束日期，处理之后的 end_date 是这份数据有效的最后日期
 def get_period_employee_info(code, period_start_date, period_end_date):
@@ -217,9 +214,8 @@ def get_finance_forecast(code, period_start_date, period_end_date):
     return result_df
 
 
-# a = get_capital_change("000002.XSHE", "2018-03-02", "2020-01-01")
-# a = get_capital_change("300015.XSHE", "2018-03-02", "2020-01-01")
-
-a = get_finance_forecast("300015.XSHE", "2011-03-02", "2020-01-01")
-print()
+if __name__ == "__main__":
+    auth(USER_NAME, PASSWORD)
+    a = get_finance_forecast("300015.XSHE", "2011-03-02", "2020-01-01")
+    print()
 
