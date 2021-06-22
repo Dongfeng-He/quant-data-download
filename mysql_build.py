@@ -16,19 +16,23 @@ from everyday_industry_and_concept import *
 from everyday_global import *
 from everyday_price import *
 import mysql.connector
+from sqlalchemy import create_engine
 
 
 def mysql_connect():
-    db = mysql.connector.connect(host=MYSQL_HOST, port=MYSQL_PORT, user=MYSQL_USER, passwd=MYSQL_PASSWORD,
-                                 database=MYSQL_DATABASE, charset=MYSQL_CHARSET)
-    return db, db.cursor()
+    url = "mysql+mysqlconnector://{}:{}@{}:{}/{}?charset={}".format(MYSQL_USER, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_PORT, MYSQL_DATABASE, MYSQL_CHARSET)
+    engine = create_engine(url)
+    return engine
 
 
 def build_day_price(security_list, start_date, end_date):
+    table_name = "day_price"
+    engine = mysql_connect()
     date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
     for date in date_list:
         for security in security_list:
             df = get_day_price(security, date)
+            df.to_sql(table_name, engine, index=False, if_exists="append")
             print()
 
 
