@@ -23,7 +23,7 @@ if __name__ == "__main__":
     #
     # df.to_csv('data.csv')
 
-    security_list = ['000425.XSHE', '000428.XSHE']
+    security_list = ['000425.XSHE", "000428.XSHE']
     # tick 数据（付费）
     # tick_attributes = get_ticks(security=security_list[0], end_dt=end_date, start_dt=start_date, count=None, fields=tick_fields)
 
