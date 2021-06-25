@@ -277,7 +277,7 @@ def get_sct_share(security, date):
     cond1 = jq.finance.STK_HK_HOLD_INFO.link_id == "310001"   # 沪股通
     cond2 = jq.finance.STK_HK_HOLD_INFO.day == date
     cond3 = jq.finance.STK_HK_HOLD_INFO.code == security
-    query = jq.query(table).filter(cond1, cond2, cond3).limit(10)
+    query = jq.query(table).filter(cond1, cond2, cond3)
     data_df = jq.finance.run_query(query)
     if len(data_df) != 1:
         return pd.DataFrame({field: [] for field in ["security"] + fields + ["date"]})
@@ -294,7 +294,7 @@ def get_securities_sct_share(security_list, date):
     cond1 = jq.finance.STK_HK_HOLD_INFO.link_id == "310001"   # 沪股通
     cond2 = jq.finance.STK_HK_HOLD_INFO.day == date
     cond3 = jq.finance.STK_HK_HOLD_INFO.code.in_(security_list)
-    query = jq.query(table).filter(cond1, cond2, cond3).limit(10)
+    query = jq.query(table).filter(cond1, cond2, cond3)
     data_df = jq.finance.run_query(query)
     if data_df.empty:
         return pd.DataFrame({field: [] for field in ["security"] + fields + ["date"]})

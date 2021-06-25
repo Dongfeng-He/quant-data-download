@@ -149,7 +149,7 @@ def create_day_call_auction_table(engine):
 
 
 def batch_update_day_call_auction_table(security_list, start_date, end_date):
-    # TODO: 未确认最大返回行数
+    # 不限制返回数量
     table_name = "day_call_auction"
     engine = mysql_connect()
     create_day_call_auction_table(engine)
@@ -194,7 +194,7 @@ def create_day_money_flow_table(engine):
 
 
 def batch_update_day_money_flow_table(security_list, start_date, end_date):
-    # TODO: 未确认最大返回行数
+    # 不限制返回数量
     table_name = "day_money_flow"
     engine = mysql_connect()
     create_day_money_flow_table(engine)
@@ -229,7 +229,7 @@ def create_day_st_table(engine):
 
 
 def batch_update_day_st_table(security_list, start_date, end_date):
-    # TODO: 未确认最大返回行数
+    # 不限制返回数量
     table_name = "day_st"
     engine = mysql_connect()
     create_day_st_table(engine)
@@ -265,7 +265,7 @@ def create_day_sct_share_table(engine):
 
 
 def batch_update_day_sct_share_table(security_list, start_date, end_date):
-    # TODO: 未确认最大返回行数
+    max_return_rows = 2000
     table_name = "day_sct_share"
     engine = mysql_connect()
     create_day_sct_share_table(engine)
@@ -274,22 +274,26 @@ def batch_update_day_sct_share_table(security_list, start_date, end_date):
     index_df = pd.read_sql_query(retrieve_index_sql, engine)
     index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
     for date in date_list:
-        df = get_securities_sct_share(security_list, date)
-        concat_index_col = df["security"] + " " + df["date"]
-        keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
-        df = df[keep_row]
-        if len(df) == 0:
-            continue
-        df.to_sql(table_name, engine, index=False, if_exists="append")
+        batch_list = batchify(security_list, max_return_rows)
+        for batch in batch_list:
+            df = get_securities_sct_share(batch, date)
+            if len(df) == 0:
+                continue
+            concat_index_col = df["security"] + " " + df["date"]
+            keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
+            df = df[keep_row]
+            if len(df) == 0:
+                continue
+            df.to_sql(table_name, engine, index=False, if_exists="append")
 
 
 if __name__ == "__main__":
     auth(USER_NAME, PASSWORD)
-    start_date = "2018-03-02"
-    end_date = "2018-03-02"
-    # security_list = SECURITY_LIST
+    start_date = "2017-03-17"
+    end_date = "2017-03-17"
+    security_list = SECURITY_LIST
     # security_list = SECURITY_LIST[:300]
     # security_list = ["603997.XSHG", "600469.XSHG", "600468.XSHG", "600467.XSHG", "600466.XSHG", "600470.XSHG"]
-    security_list = ["300015.XSHE", "000002.XSHE", "000022.XSHE", "000012.XSHE"]
+    # security_list = ["300015.XSHE", "000002.XSHE", "000022.XSHE", "000012.XSHE"]
     batch_update_day_sct_share_table(security_list, start_date, end_date)
     print()
