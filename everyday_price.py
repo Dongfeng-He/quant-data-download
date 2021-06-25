@@ -84,7 +84,7 @@ def get_securities_day_call_auction(security_list, date):
     av_fields = ["a1_v", "a2_v", "a3_v", "a4_v", "a5_v"]    # 五档卖量
     ap_fields = ["a1_p", "a2_p", "a3_p", "a4_p", "a5_p"]    # 五档卖价
     bv_fields = ["b1_v", "b2_v", "b3_v", "b4_v", "b5_v"]    # 五档买量
-    bp_fields = ["b1_p", "b2_p", "b3_p", "b4_p", "b5_p"]    # 武当买价
+    bp_fields = ["b1_p", "b2_p", "b3_p", "b4_p", "b5_p"]    # 五档买价
     field_names = ["av", "ap", "bv", "bp"]
     field_lists = [av_fields, ap_fields, bv_fields, bp_fields]
     fields = av_fields + ap_fields + bv_fields + bp_fields
@@ -317,4 +317,3 @@ def get_securities_sct_share(security_list, date):
 # a2 = get_securities_sct_share(code_list, "2017-03-17").sort_values(by=["security"], ascending=[True]).reset_index(drop=True)
 # c = a1.equals(a2)
 # print()
-

@@ -17,6 +17,7 @@ from everyday_global import *
 from everyday_price import *
 import mysql.connector
 from sqlalchemy import create_engine
+import numpy as np
 
 
 def mysql_connect():
@@ -44,7 +45,7 @@ def create_day_price_table(engine):
         UNIQUE `day_price_security_date_index` (`security`, `date`),
         INDEX `day_price_security_index` (`security`),
         INDEX `day_price_security_date` (`date`)
-    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日行情表';
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日行情';
     """
     engine.execute(create_table_sql)
 
@@ -54,21 +55,15 @@ def update_day_price_table(security_list, start_date, end_date):
     engine = mysql_connect()
     create_day_price_table(engine)
     date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
-    retrieve_index_sql = "select security, date from day_price"
+    retrieve_index_sql = "select security, date from {}".format(table_name)
     index_df = pd.read_sql_query(retrieve_index_sql, engine)
     index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
-    now = time.time()
-    num = 0
     for date in date_list:
         for security in security_list:
             df = get_day_price(security, date)
             if len(df) == 0 or (df["security"] + " " + df["date"].map(str)).tolist()[0] in index_set:
                 continue
-            num += 1
             df.to_sql(table_name, engine, index=False, if_exists="append")
-    cost_time = time.time() - now
-    print(cost_time)
-    print(cost_time / num)
 
 
 def batch_update_day_price_table(security_list, start_date, end_date):
@@ -77,7 +72,7 @@ def batch_update_day_price_table(security_list, start_date, end_date):
     engine = mysql_connect()
     create_day_price_table(engine)
     date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
-    retrieve_index_sql = "select security, date from day_price"
+    retrieve_index_sql = "select security, date from {}".format(table_name)
     index_df = pd.read_sql_query(retrieve_index_sql, engine)
     index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
     now = time.time()
@@ -110,22 +105,20 @@ def create_day_mtss_table(engine):
         UNIQUE `day_price_security_date_index` (`security`, `date`),
         INDEX `day_price_security_index` (`security`),
         INDEX `day_price_security_date` (`date`)
-    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日融资融券信息表';
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日融资融券信息';
     """
     engine.execute(create_table_sql)
 
 
 def batch_update_day_mtss_table(security_list, start_date, end_date):
     # 不限制返回数量
-    # TODO: 还没有测 double、text 类型下 null 的插入是否正常
     table_name = "day_mtss"
     engine = mysql_connect()
-    create_day_mtss_table(engine)
+    create_day_price_table(engine)
     date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
-    retrieve_index_sql = "select security, date from day_mtss"
+    retrieve_index_sql = "select security, date from {}".format(table_name)
     index_df = pd.read_sql_query(retrieve_index_sql, engine)
     index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
-    now = time.time()
     for date in date_list:
         df = get_securities_day_mtss(security_list, date)
         concat_index_col = df["security"] + " " + df["date"]
@@ -134,40 +127,169 @@ def batch_update_day_mtss_table(security_list, start_date, end_date):
         if len(df) == 0:
             continue
         df.to_sql(table_name, engine, index=False, if_exists="append")
-    cost_time = time.time() - now
-    print(cost_time)
 
 
-def update_day_mtss_table(security_list, start_date, end_date):
-    table_name = "day_mtss"
+def create_day_call_auction_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_call_auction` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `security` VARCHAR (15) NOT NULL COMMENT '股票代码',
+        `av` TEXT DEFAULT NULL COMMENT '五档卖量',
+        `ap` TEXT DEFAULT NULL COMMENT '五档卖价',
+        `bv` TEXT DEFAULT NULL COMMENT '五档买量',
+        `bp` TEXT DEFAULT NULL COMMENT '五档买价',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_price_security_date_index` (`security`, `date`),
+        INDEX `day_price_security_index` (`security`),
+        INDEX `day_price_security_date` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日盘前集合竞价';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_call_auction_table(security_list, start_date, end_date):
+    # TODO: 未确认最大返回行数
+    table_name = "day_call_auction"
     engine = mysql_connect()
-    create_day_mtss_table(engine)
+    create_day_call_auction_table(engine)
     date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
-    retrieve_index_sql = "select security, date from day_mtss"
+    retrieve_index_sql = "select security, date from {}".format(table_name)
     index_df = pd.read_sql_query(retrieve_index_sql, engine)
     index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
-    now = time.time()
-    num = 0
     for date in date_list:
-        for security in security_list:
-            df = get_day_mtss(security, date)
-            if len(df) == 0 or (df["security"] + " " + df["date"].map(str)).tolist()[0] in index_set:
-                continue
-            num += 1
-            df.to_sql(table_name, engine, index=False, if_exists="append")
-    cost_time = time.time() - now
-    print(cost_time)
-    print(cost_time / num)
+        df = get_securities_day_call_auction(security_list, date)
+        concat_index_col = df["security"] + " " + df["date"]
+        keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
+        df = df[keep_row]
+        if len(df) == 0:
+            continue
+        df.to_sql(table_name, engine, index=False, if_exists="append")
+
+
+def create_day_money_flow_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_money_flow` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `security` VARCHAR (15) NOT NULL COMMENT '股票代码',
+        `change_pct` DOUBLE DEFAULT NULL COMMENT '涨跌幅',
+        `net_amount_main` DOUBLE DEFAULT NULL COMMENT '主力净额',
+        `net_pct_main` DOUBLE DEFAULT NULL COMMENT '主力净占比',
+        `net_amount_xl` DOUBLE DEFAULT NULL COMMENT '超大单净额',
+        `net_pct_xl` DOUBLE DEFAULT NULL COMMENT '超大单净占比',
+        `net_amount_l` DOUBLE DEFAULT NULL COMMENT '大单净额',
+        `net_pct_l` DOUBLE DEFAULT NULL COMMENT '打单净占比',
+        `net_amount_m` DOUBLE DEFAULT NULL COMMENT '中单净额',
+        `net_pct_m` DOUBLE DEFAULT NULL COMMENT '中单净占比',
+        `net_amount_s` DOUBLE DEFAULT NULL COMMENT '小单净额',
+        `net_pct_s` DOUBLE DEFAULT NULL COMMENT '小单净占比',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_price_security_date_index` (`security`, `date`),
+        INDEX `day_price_security_index` (`security`),
+        INDEX `day_price_security_date` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日资金流向';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_money_flow_table(security_list, start_date, end_date):
+    # TODO: 未确认最大返回行数
+    table_name = "day_money_flow"
+    engine = mysql_connect()
+    create_day_money_flow_table(engine)
+    date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
+    retrieve_index_sql = "select security, date from {}".format(table_name)
+    index_df = pd.read_sql_query(retrieve_index_sql, engine)
+    index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
+    for date in date_list:
+        df = get_securities_day_money_flow(security_list, date)
+        concat_index_col = df["security"] + " " + df["date"]
+        keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
+        df = df[keep_row]
+        if len(df) == 0:
+            continue
+        df.to_sql(table_name, engine, index=False, if_exists="append")
+
+
+def create_day_st_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_st` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `security` VARCHAR (15) NOT NULL COMMENT '股票代码',
+        `is_st` TINYINT DEFAULT NULL COMMENT '是否ST',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_price_security_date_index` (`security`, `date`),
+        INDEX `day_price_security_index` (`security`),
+        INDEX `day_price_security_date` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日ST信息';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_st_table(security_list, start_date, end_date):
+    # TODO: 未确认最大返回行数
+    table_name = "day_st"
+    engine = mysql_connect()
+    create_day_st_table(engine)
+    date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
+    retrieve_index_sql = "select security, date from {}".format(table_name)
+    index_df = pd.read_sql_query(retrieve_index_sql, engine)
+    index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
+    for date in date_list:
+        df = get_securities_day_st(security_list, date)
+        concat_index_col = df["security"] + " " + df["date"]
+        keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
+        df = df[keep_row]
+        if len(df) == 0:
+            continue
+        df.to_sql(table_name, engine, index=False, if_exists="append")
+
+
+def create_day_sct_share_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_sct_share` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `security` VARCHAR (15) NOT NULL COMMENT '股票代码',
+        `share_number` INT DEFAULT NULL COMMENT '持股数量',
+        `share_ratio` DOUBLE DEFAULT NULL COMMENT '持股比例',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_price_security_date_index` (`security`, `date`),
+        INDEX `day_price_security_index` (`security`),
+        INDEX `day_price_security_date` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日沪股通（北向资金）持股';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_sct_share_table(security_list, start_date, end_date):
+    # TODO: 未确认最大返回行数
+    table_name = "day_sct_share"
+    engine = mysql_connect()
+    create_day_sct_share_table(engine)
+    date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
+    retrieve_index_sql = "select security, date from {}".format(table_name)
+    index_df = pd.read_sql_query(retrieve_index_sql, engine)
+    index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
+    for date in date_list:
+        df = get_securities_sct_share(security_list, date)
+        concat_index_col = df["security"] + " " + df["date"]
+        keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
+        df = df[keep_row]
+        if len(df) == 0:
+            continue
+        df.to_sql(table_name, engine, index=False, if_exists="append")
 
 
 if __name__ == "__main__":
     auth(USER_NAME, PASSWORD)
     start_date = "2018-03-02"
     end_date = "2018-03-02"
-    security_list = SECURITY_LIST
+    # security_list = SECURITY_LIST
     # security_list = SECURITY_LIST[:300]
-    # security_list = ["300015.XSHE", "000002.XSHE", "000022.XSHE", "000012.XSHE"]
-    # update_day_price_table(security_list, start_date, end_date)
-    update_day_mtss_table(security_list, start_date, end_date)
-    # batch_update_day_mtss_table(security_list, start_date, end_date)
+    # security_list = ["603997.XSHG", "600469.XSHG", "600468.XSHG", "600467.XSHG", "600466.XSHG", "600470.XSHG"]
+    security_list = ["300015.XSHE", "000002.XSHE", "000022.XSHE", "000012.XSHE"]
+    batch_update_day_sct_share_table(security_list, start_date, end_date)
     print()
