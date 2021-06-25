@@ -78,6 +78,8 @@ def batch_update_day_price_table(security_list, start_date, end_date):
     now = time.time()
     for date in date_list:
         df = get_securities_day_price(security_list, date)
+        if len(df) == 0:
+            continue
         concat_index_col = df["security"] + " " + df["date"]
         keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
         df = df[keep_row]
@@ -121,6 +123,8 @@ def batch_update_day_mtss_table(security_list, start_date, end_date):
     index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
     for date in date_list:
         df = get_securities_day_mtss(security_list, date)
+        if len(df) == 0:
+            continue
         concat_index_col = df["security"] + " " + df["date"]
         keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
         df = df[keep_row]
@@ -159,6 +163,8 @@ def batch_update_day_call_auction_table(security_list, start_date, end_date):
     index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
     for date in date_list:
         df = get_securities_day_call_auction(security_list, date)
+        if len(df) == 0:
+            continue
         concat_index_col = df["security"] + " " + df["date"]
         keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
         df = df[keep_row]
@@ -204,6 +210,8 @@ def batch_update_day_money_flow_table(security_list, start_date, end_date):
     index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
     for date in date_list:
         df = get_securities_day_money_flow(security_list, date)
+        if len(df) == 0:
+            continue
         concat_index_col = df["security"] + " " + df["date"]
         keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
         df = df[keep_row]
@@ -239,6 +247,8 @@ def batch_update_day_st_table(security_list, start_date, end_date):
     index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
     for date in date_list:
         df = get_securities_day_st(security_list, date)
+        if len(df) == 0:
+            continue
         concat_index_col = df["security"] + " " + df["date"]
         keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
         df = df[keep_row]
@@ -287,13 +297,92 @@ def batch_update_day_sct_share_table(security_list, start_date, end_date):
             df.to_sql(table_name, engine, index=False, if_exists="append")
 
 
+def create_day_industry_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_industry` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `security` VARCHAR (15) NOT NULL COMMENT '股票代码',
+        `sw_l1` TEXT DEFAULT NULL COMMENT '申万一级行业',
+        `sw_l2` TEXT DEFAULT NULL COMMENT '申万二级行业',
+        `sw_l3` TEXT DEFAULT NULL COMMENT '申万三级行业',
+        `jq_l1` TEXT DEFAULT NULL COMMENT '聚宽一级行业',
+        `jq_l2` TEXT DEFAULT NULL COMMENT '聚宽二级行业',
+        `zjw` TEXT DEFAULT NULL COMMENT '证监会行业',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_price_security_date_index` (`security`, `date`),
+        INDEX `day_price_security_index` (`security`),
+        INDEX `day_price_security_date` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日股票所属行业信息';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_industry_table(security_list, start_date, end_date):
+    # 不限制返回数量
+    table_name = "day_industry"
+    engine = mysql_connect()
+    create_day_industry_table(engine)
+    date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
+    retrieve_index_sql = "select security, date from {}".format(table_name)
+    index_df = pd.read_sql_query(retrieve_index_sql, engine)
+    index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
+    for date in date_list:
+        df = get_securities_day_industry(security_list, date)
+        if len(df) == 0:
+            continue
+        concat_index_col = df["security"] + " " + df["date"]
+        keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
+        df = df[keep_row]
+        if len(df) == 0:
+            continue
+        df.to_sql(table_name, engine, index=False, if_exists="append")
+
+
+def create_day_concept_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_concept` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `security` VARCHAR (15) NOT NULL COMMENT '股票代码',
+        `concept_list` TEXT DEFAULT NULL COMMENT '概念列表',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_price_security_date_index` (`security`, `date`),
+        INDEX `day_price_security_index` (`security`),
+        INDEX `day_price_security_date` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日股票所属概念信息';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_concept_table(security_list, start_date, end_date):
+    # 不限制返回数量
+    table_name = "day_concept"
+    engine = mysql_connect()
+    create_day_concept_table(engine)
+    date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
+    retrieve_index_sql = "select security, date from {}".format(table_name)
+    index_df = pd.read_sql_query(retrieve_index_sql, engine)
+    index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
+    for date in date_list:
+        df = get_securities_day_concept(security_list, date)
+        if len(df) == 0:
+            continue
+        concat_index_col = df["security"] + " " + df["date"]
+        keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
+        df = df[keep_row]
+        if len(df) == 0:
+            continue
+        df.to_sql(table_name, engine, index=False, if_exists="append")
+
+
 if __name__ == "__main__":
     auth(USER_NAME, PASSWORD)
-    start_date = "2017-03-17"
-    end_date = "2017-03-17"
-    security_list = SECURITY_LIST
+    start_date = "2018-03-02"
+    end_date = "2018-03-02"
+    # security_list = SECURITY_LIST
     # security_list = SECURITY_LIST[:300]
     # security_list = ["603997.XSHG", "600469.XSHG", "600468.XSHG", "600467.XSHG", "600466.XSHG", "600470.XSHG"]
-    # security_list = ["300015.XSHE", "000002.XSHE", "000022.XSHE", "000012.XSHE"]
-    batch_update_day_sct_share_table(security_list, start_date, end_date)
+    security_list = ["300015.XSHE", "000002.XSHE", "000022.XSHE", "000012.XSHE", "300016.XSHE"]
+    batch_update_day_concept_table(security_list, start_date, end_date)
     print()

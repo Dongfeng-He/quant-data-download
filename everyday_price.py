@@ -253,6 +253,7 @@ def get_securities_day_st(security_list, date):
     result_df = data_df[["security", "is_st", "date"]]
     return result_df
 
+
 # a1 = get_day_st("300015.XSHE", "2018-03-02")
 # a2 = get_securities_day_st(["300015.XSHE"], "2018-03-02")
 # b = a1.equals(a2)

@@ -3,6 +3,7 @@ from conf.common_conf import *
 from utils.utilization import *
 import pandas as pd
 from datetime import datetime, timedelta
+import math
 
 
 auth(USER_NAME, PASSWORD)
@@ -68,6 +69,15 @@ def get_adjacent_trade_day(date, n):
             adjacent_date += timedelta(days=delta)
     return None
 
+
+def batchify(security_list, batch_size):
+    num = len(security_list)
+    batch_num = int(math.ceil(num / batch_size))
+    batch_list = []
+    for i in range(batch_num):
+        batch = security_list[i * batch_size: (i + 1) * batch_size]
+        batch_list.append(batch)
+    return batch_list
 
 
 

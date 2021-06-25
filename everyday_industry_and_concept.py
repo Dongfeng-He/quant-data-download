@@ -12,7 +12,7 @@ import os
 
 
 # 获取多股票每日所属行业信息
-def get_security_industry(security_list, date):
+def get_securities_day_industry(security_list, date):
     # 申万一级行业、申万二级行业、申万三级行业、聚宽一级行业、聚宽二级行业、证监会行业
     name_list = ["sw_l1", "sw_l2", "sw_l3", "jq_l1", "jq_l2", "zjw"]
     data_dict = jq.get_industry(security_list, date=date)
@@ -36,9 +36,13 @@ def get_security_industry(security_list, date):
     return result_df
 
 
+# code_list = ["000002.XSHE", "000012.XSHE", "000022.XSHE", "300015.XSHE", "300016.XSHE"]
+# a1 = get_securities_day_industry(code_list, "2018-03-02")
+# print()
+
+
 # 获取多股票每日所属概念信息
-def get_security_concept(security_list, date):
-    # 申万一级行业、申万二级行业、申万三级行业、聚宽一级行业、聚宽二级行业、证监会行业
+def get_securities_day_concept(security_list, date):
     data_dict = jq.get_concept(security_list, date=date)
     data_df_list = []
     for security in data_dict:
@@ -54,6 +58,11 @@ def get_security_concept(security_list, date):
     result_df = concat_df.sort_values(by=["security"], ascending=True).reset_index(drop=True)
     result_df["date"] = date
     return result_df
+
+
+# code_list = ["000002.XSHE", "000012.XSHE", "000022.XSHE", "300015.XSHE", "300016.XSHE"]
+# a1 = get_securities_day_concept(code_list, "2018-03-02")
+# print()
 
 
 # 获取单一股票单日所属行业，每列以 "行业代码_行业名字" 表示
@@ -88,9 +97,3 @@ def get_day_concept(security, date):
 
 # TODO：行业概念行情参考：https://www.joinquant.com/view/community/detail/16656
 # TODO：其他有价值的数据：人民币外汇牌价(日级)、银行间拆借利率表（日级）、景气指数、获取基金持股信息、、
-
-if __name__ == "__main__":
-    auth(USER_NAME, PASSWORD)
-    # a = get_security_industry(["300015.XSHE"], "2011-03-02")
-    a = get_security_industry(["300015.XSHE", "000001.XSHE"], "2000-03-02")
-    print()
