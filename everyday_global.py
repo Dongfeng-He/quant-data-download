@@ -32,7 +32,13 @@ def get_sz_sh_trade_info(date):
                 return empty_df
             field_data_dict[field].append(field_data_list[0])
     result_df = pd.DataFrame({field: "|".join(list(map(lambda x: str(x), field_data_dict[field]))) for field in fields}, index=[0])
+    result_df["date"] = date
+    result_df = result_df[fields + ["date"]]
     return result_df
+
+
+# a1 = get_sz_sh_trade_info("2018-03-02")
+# print()
 
 
 # 获取市场通每日交易信息
@@ -56,7 +62,13 @@ def get_sct_trade_info(date):
                 return empty_df
             field_data_dict[field].append(field_data_list[0])
     result_df = pd.DataFrame({field: "|".join(list(map(lambda x: str(x), field_data_dict[field]))) for field in fields}, index=[0])
+    result_df["date"] = date
+    result_df = result_df[fields + ["date"]]
     return result_df
+
+
+# a1 = get_sct_trade_info("2018-03-02")
+# print()
 
 
 # 获取市场通每日汇率信息
@@ -71,18 +83,11 @@ def get_sct_rate(date):
     if len(data_df) != 1:
         return pd.DataFrame({field: [] for field in fields})
     result_df = data_df[fields]
+    result_df["date"] = date
+    result_df = result_df[fields + ["date"]]
     return result_df
 
 
-def get_day_info(date):
-    df_list = []
-    df_list.append(get_sz_sh_trade_info(date))
-    df_list.append(get_sct_trade_info(date))
-    df_list.append(get_sct_rate(date))
-    df = pd.concat(df_list, axis=1)
-    print()
+# a1 = get_sct_rate("2018-03-02")
+# print()
 
-
-if __name__ == "__main__":
-    auth(USER_NAME, PASSWORD)
-    get_day_info("2015-03-02")

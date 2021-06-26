@@ -44,7 +44,7 @@ def create_day_price_table(engine):
         PRIMARY KEY (`record_id`),
         UNIQUE `day_price_security_date_index` (`security`, `date`),
         INDEX `day_price_security_index` (`security`),
-        INDEX `day_price_security_date` (`date`)
+        INDEX `day_price_date_index` (`date`)
     )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日行情';
     """
     engine.execute(create_table_sql)
@@ -104,9 +104,9 @@ def create_day_mtss_table(engine):
         `fin_sec_value` DOUBLE DEFAULT NULL COMMENT '融资融券余额',
         `date` DATE NOT NULL COMMENT '日期',
         PRIMARY KEY (`record_id`),
-        UNIQUE `day_price_security_date_index` (`security`, `date`),
-        INDEX `day_price_security_index` (`security`),
-        INDEX `day_price_security_date` (`date`)
+        UNIQUE `day_mtss_security_date_index` (`security`, `date`),
+        INDEX `day_mtss_security_index` (`security`),
+        INDEX `day_mtss_date_index` (`date`)
     )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日融资融券信息';
     """
     engine.execute(create_table_sql)
@@ -144,9 +144,9 @@ def create_day_call_auction_table(engine):
         `bp` TEXT DEFAULT NULL COMMENT '五档买价',
         `date` DATE NOT NULL COMMENT '日期',
         PRIMARY KEY (`record_id`),
-        UNIQUE `day_price_security_date_index` (`security`, `date`),
-        INDEX `day_price_security_index` (`security`),
-        INDEX `day_price_security_date` (`date`)
+        UNIQUE `day_call_auction_security_date_index` (`security`, `date`),
+        INDEX `day_call_auction_security_index` (`security`),
+        INDEX `day_call_auction_date_index` (`date`)
     )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日盘前集合竞价';
     """
     engine.execute(create_table_sql)
@@ -191,9 +191,9 @@ def create_day_money_flow_table(engine):
         `net_pct_s` DOUBLE DEFAULT NULL COMMENT '小单净占比',
         `date` DATE NOT NULL COMMENT '日期',
         PRIMARY KEY (`record_id`),
-        UNIQUE `day_price_security_date_index` (`security`, `date`),
-        INDEX `day_price_security_index` (`security`),
-        INDEX `day_price_security_date` (`date`)
+        UNIQUE `day_money_flow_security_date_index` (`security`, `date`),
+        INDEX `day_money_flow_security_index` (`security`),
+        INDEX `day_money_flow_date_index` (`date`)
     )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日资金流向';
     """
     engine.execute(create_table_sql)
@@ -228,9 +228,9 @@ def create_day_st_table(engine):
         `is_st` TINYINT DEFAULT NULL COMMENT '是否ST',
         `date` DATE NOT NULL COMMENT '日期',
         PRIMARY KEY (`record_id`),
-        UNIQUE `day_price_security_date_index` (`security`, `date`),
-        INDEX `day_price_security_index` (`security`),
-        INDEX `day_price_security_date` (`date`)
+        UNIQUE `day_st_security_date_index` (`security`, `date`),
+        INDEX `day_st_security_index` (`security`),
+        INDEX `day_st_date_index` (`date`)
     )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日ST信息';
     """
     engine.execute(create_table_sql)
@@ -266,9 +266,9 @@ def create_day_sct_share_table(engine):
         `share_ratio` DOUBLE DEFAULT NULL COMMENT '持股比例',
         `date` DATE NOT NULL COMMENT '日期',
         PRIMARY KEY (`record_id`),
-        UNIQUE `day_price_security_date_index` (`security`, `date`),
-        INDEX `day_price_security_index` (`security`),
-        INDEX `day_price_security_date` (`date`)
+        UNIQUE `day_sct_share_security_date_index` (`security`, `date`),
+        INDEX `day_sct_share_security_index` (`security`),
+        INDEX `day_sct_share_date_index` (`date`)
     )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日沪股通（北向资金）持股';
     """
     engine.execute(create_table_sql)
@@ -310,9 +310,9 @@ def create_day_industry_table(engine):
         `zjw` TEXT DEFAULT NULL COMMENT '证监会行业',
         `date` DATE NOT NULL COMMENT '日期',
         PRIMARY KEY (`record_id`),
-        UNIQUE `day_price_security_date_index` (`security`, `date`),
-        INDEX `day_price_security_index` (`security`),
-        INDEX `day_price_security_date` (`date`)
+        UNIQUE `day_industry_security_date_index` (`security`, `date`),
+        INDEX `day_industry_security_index` (`security`),
+        INDEX `day_industry_date_index` (`date`)
     )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日股票所属行业信息';
     """
     engine.execute(create_table_sql)
@@ -347,9 +347,9 @@ def create_day_concept_table(engine):
         `concept_list` TEXT DEFAULT NULL COMMENT '概念列表',
         `date` DATE NOT NULL COMMENT '日期',
         PRIMARY KEY (`record_id`),
-        UNIQUE `day_price_security_date_index` (`security`, `date`),
-        INDEX `day_price_security_index` (`security`),
-        INDEX `day_price_security_date` (`date`)
+        UNIQUE `day_concept_security_date_index` (`security`, `date`),
+        INDEX `day_concept_security_index` (`security`),
+        INDEX `day_concept_date_index` (`date`)
     )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日股票所属概念信息';
     """
     engine.execute(create_table_sql)
@@ -376,6 +376,121 @@ def batch_update_day_concept_table(security_list, start_date, end_date):
         df.to_sql(table_name, engine, index=False, if_exists="append")
 
 
+def create_day_sz_sh_trade_info_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_sz_sh_trade_info` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `total_market_cap` TEXT DEFAULT NULL COMMENT '总市值',
+        `circulating_market_cap` TEXT DEFAULT NULL COMMENT '流通市值',
+        `volume` TEXT DEFAULT NULL COMMENT '成交股数',
+        `money` TEXT DEFAULT NULL COMMENT '成交金额',
+        `deal_number` TEXT DEFAULT NULL COMMENT '交易笔数',
+        `pe_average` TEXT DEFAULT NULL COMMENT '平均市盈率',
+        `turnover_ratio` TEXT DEFAULT NULL COMMENT '换手率',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_sz_sh_trade_info_date_index` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日上海、深圳交易信息';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_sz_sh_trade_info_table(start_date, end_date):
+    # 不限制返回数量
+    table_name = "day_sz_sh_trade_info"
+    engine = mysql_connect()
+    create_day_sz_sh_trade_info_table(engine)
+    date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
+    retrieve_index_sql = "select date from {}".format(table_name)
+    index_df = pd.read_sql_query(retrieve_index_sql, engine)
+    index_set = set(index_df["date"].map(str).tolist())
+    for date in date_list:
+        df = get_sz_sh_trade_info(date)
+        if len(df) == 0:
+            continue
+        index_col = df["date"]
+        keep_row = index_col.apply(lambda x: True if x not in index_set else False)
+        df = df[keep_row]
+        if len(df) == 0:
+            continue
+        df.to_sql(table_name, engine, index=False, if_exists="append")
+
+
+def create_day_sct_trade_info_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_sct_trade_info` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `buy_amount` TEXT DEFAULT NULL COMMENT '买入金额',
+        `buy_volume` TEXT DEFAULT NULL COMMENT '买入股数',
+        `sell_amount` TEXT DEFAULT NULL COMMENT '卖出金额',
+        `sell_volume` TEXT DEFAULT NULL COMMENT '卖出股数',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_sct_trade_info_date_index` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日沪股通、港股通交易信息';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_sct_trade_info_table(start_date, end_date):
+    # 不限制返回数量
+    table_name = "day_sct_trade_info"
+    engine = mysql_connect()
+    create_day_sct_trade_info_table(engine)
+    date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
+    retrieve_index_sql = "select date from {}".format(table_name)
+    index_df = pd.read_sql_query(retrieve_index_sql, engine)
+    index_set = set(index_df["date"].map(str).tolist())
+    for date in date_list:
+        df = get_sct_trade_info(date)
+        if len(df) == 0:
+            continue
+        index_col = df["date"]
+        keep_row = index_col.apply(lambda x: True if x not in index_set else False)
+        df = df[keep_row]
+        if len(df) == 0:
+            continue
+        df.to_sql(table_name, engine, index=False, if_exists="append")
+
+
+def create_day_sct_rate_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_sct_rate` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `refer_bid_rate` DOUBLE DEFAULT NULL COMMENT '买入参考汇率',
+        `refer_ask_rate` DOUBLE DEFAULT NULL COMMENT '卖出参考汇率',
+        `settle_bid_rate` DOUBLE DEFAULT NULL COMMENT '买入结算汇率',
+        `settle_ask_rate` DOUBLE DEFAULT NULL COMMENT '卖出结算汇率',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_sct_rate_date_index` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日港股通（沪）每日汇率信息';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_sct_rate_table(start_date, end_date):
+    # 不限制返回数量
+    table_name = "day_sct_rate"
+    engine = mysql_connect()
+    create_day_sct_rate_table(engine)
+    date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
+    retrieve_index_sql = "select date from {}".format(table_name)
+    index_df = pd.read_sql_query(retrieve_index_sql, engine)
+    index_set = set(index_df["date"].map(str).tolist())
+    for date in date_list:
+        df = get_sct_rate(date)
+        if len(df) == 0:
+            continue
+        index_col = df["date"]
+        keep_row = index_col.apply(lambda x: True if x not in index_set else False)
+        df = df[keep_row]
+        if len(df) == 0:
+            continue
+        df.to_sql(table_name, engine, index=False, if_exists="append")
+
+
+
 if __name__ == "__main__":
     auth(USER_NAME, PASSWORD)
     start_date = "2018-03-02"
@@ -384,5 +499,5 @@ if __name__ == "__main__":
     # security_list = SECURITY_LIST[:300]
     # security_list = ["603997.XSHG", "600469.XSHG", "600468.XSHG", "600467.XSHG", "600466.XSHG", "600470.XSHG"]
     security_list = ["300015.XSHE", "000002.XSHE", "000022.XSHE", "000012.XSHE", "300016.XSHE"]
-    batch_update_day_concept_table(security_list, start_date, end_date)
+    batch_update_day_sct_rate_table(start_date, end_date)
     print()
