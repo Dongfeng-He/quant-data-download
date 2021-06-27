@@ -490,6 +490,170 @@ def batch_update_day_sct_rate_table(start_date, end_date):
         df.to_sql(table_name, engine, index=False, if_exists="append")
 
 
+def create_day_valuation_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_valuation` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `security` VARCHAR (15) NOT NULL COMMENT '股票代码',
+        `pe_ratio` DOUBLE DEFAULT NULL COMMENT '市盈率TTM',
+        `turnover_ratio` DOUBLE DEFAULT NULL COMMENT '换手率',
+        `pb_ratio` DOUBLE DEFAULT NULL COMMENT '市净率',
+        `ps_ratio` DOUBLE DEFAULT NULL COMMENT '市销率TTM',
+        `pcf_ratio` DOUBLE DEFAULT NULL COMMENT '市现率TTM',
+        `capitalization` DOUBLE DEFAULT NULL COMMENT '总股本',
+        `market_cap` DOUBLE DEFAULT NULL COMMENT '总市值',
+        `circulating_cap` DOUBLE DEFAULT NULL COMMENT '流通股本',
+        `circulating_market_cap` DOUBLE DEFAULT NULL COMMENT '流通市值',
+        `pe_ratio_lyr` DOUBLE DEFAULT NULL COMMENT '市盈率',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_valuation_security_date_index` (`security`, `date`),
+        INDEX `day_valuation_security_index` (`security`),
+        INDEX `day_valuation_date_index` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日股票市值数据';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_valuation_table(security_list, start_date, end_date):
+    max_return_rows = 2000
+    table_name = "day_valuation"
+    engine = mysql_connect()
+    create_day_valuation_table(engine)
+    date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
+    retrieve_index_sql = "select security, date from {}".format(table_name)
+    index_df = pd.read_sql_query(retrieve_index_sql, engine)
+    index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
+    for date in date_list:
+        batch_list = batchify(security_list, max_return_rows)
+        for batch in batch_list:
+            df = get_valuation(batch, date)
+            if len(df) == 0:
+                continue
+            concat_index_col = df["security"] + " " + df["date"]
+            keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
+            df = df[keep_row]
+            if len(df) == 0:
+                continue
+            df.to_sql(table_name, engine, index=False, if_exists="append")
+
+
+def create_day_finance_indicator_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_finance_indicator` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `security` VARCHAR (15) NOT NULL COMMENT '股票代码',
+        `eps` DOUBLE DEFAULT NULL COMMENT '每股收益EPS',
+        `adjusted_profit` DOUBLE DEFAULT NULL COMMENT '扣除非经常损益后的净利润',
+        `operating_profit` DOUBLE DEFAULT NULL COMMENT '经营活动净收益',
+        `value_change_profit` DOUBLE DEFAULT NULL COMMENT '价值变动净收益',
+        `roe` DOUBLE DEFAULT NULL COMMENT '净资产收益率ROE',
+        `inc_return` DOUBLE DEFAULT NULL COMMENT '净资产收益率(扣除非经常损益)',
+        `roa` DOUBLE DEFAULT NULL COMMENT '总资产净利率ROA',
+        `net_profit_margin` DOUBLE DEFAULT NULL COMMENT '销售净利率',
+        `gross_profit_margin` DOUBLE DEFAULT NULL COMMENT '销售毛利率',
+        `expense_to_total_revenue` DOUBLE DEFAULT NULL COMMENT '营业总成本/营业总收入',
+        `operation_profit_to_total_revenue` DOUBLE DEFAULT NULL COMMENT '营业利润/营业总收入',
+        `net_profit_to_total_revenue` DOUBLE DEFAULT NULL COMMENT '净利润/营业总收入',
+        `operating_expense_to_total_revenue` DOUBLE DEFAULT NULL COMMENT '营业费用/营业总收入',
+        `ga_expense_to_total_revenue` DOUBLE DEFAULT NULL COMMENT '管理费用/营业总收入',
+        `financing_expense_to_total_revenue` DOUBLE DEFAULT NULL COMMENT '财务费用/营业总收入',
+        `operating_profit_to_profit` DOUBLE DEFAULT NULL COMMENT '经营活动净收益/利润总额',
+        `invesment_profit_to_profit` DOUBLE DEFAULT NULL COMMENT '价值变动净收益/利润总额',
+        `adjusted_profit_to_profit` DOUBLE DEFAULT NULL COMMENT '扣除非经常损益后的净利润/归属于母公司所有者的净利润',
+        `goods_sale_and_service_to_revenue` DOUBLE DEFAULT NULL COMMENT '销售商品提供劳务收到的现金/营业收入',
+        `ocf_to_revenue` DOUBLE DEFAULT NULL COMMENT '经营活动产生的现金流量净额/营业收入',
+        `ocf_to_operating_profit` DOUBLE DEFAULT NULL COMMENT '经营活动产生的现金流量净额/经营活动净收益',
+        `inc_total_revenue_year_on_year` DOUBLE DEFAULT NULL COMMENT '营业总收入同比增长率',
+        `inc_total_revenue_annual` DOUBLE DEFAULT NULL COMMENT '营业总收入环比增长率',
+        `inc_revenue_year_on_year` DOUBLE DEFAULT NULL COMMENT '营业收入同比增长率',
+        `inc_revenue_annual` DOUBLE DEFAULT NULL COMMENT '营业收入环比增长率',
+        `inc_operation_profit_year_on_year` DOUBLE DEFAULT NULL COMMENT '营业利润同比增长率',
+        `inc_operation_profit_annual` DOUBLE DEFAULT NULL COMMENT '营业利润环比增长率',
+        `inc_net_profit_year_on_year` DOUBLE DEFAULT NULL COMMENT '净利润同比增长率',
+        `inc_net_profit_annual` DOUBLE DEFAULT NULL COMMENT '净利润环比增长率',
+        `inc_net_profit_to_shareholders_year_on_year` DOUBLE DEFAULT NULL COMMENT '归属母公司股东的净利润同比增长率',
+        `inc_net_profit_to_shareholders_annual` DOUBLE DEFAULT NULL COMMENT '归属母公司股东的净利润环比增长率',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_finance_indicator_security_date_index` (`security`, `date`),
+        INDEX `day_finance_indicator_security_index` (`security`),
+        INDEX `day_finance_indicator_date_index` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日股票财务指标数据';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_finance_indicator_table(security_list, start_date, end_date):
+    max_return_rows = 2000
+    table_name = "day_finance_indicator"
+    engine = mysql_connect()
+    create_day_finance_indicator_table(engine)
+    date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
+    retrieve_index_sql = "select security, date from {}".format(table_name)
+    index_df = pd.read_sql_query(retrieve_index_sql, engine)
+    index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
+    for date in date_list:
+        batch_list = batchify(security_list, max_return_rows)
+        for batch in batch_list:
+            df = get_finance_indicator(batch, date)
+            if len(df) == 0:
+                continue
+            concat_index_col = df["security"] + " " + df["date"]
+            keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
+            df = df[keep_row]
+            if len(df) == 0:
+                continue
+            df.to_sql(table_name, engine, index=False, if_exists="append")
+
+
+def create_day_income_table(engine):
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS `day_income` (
+        `record_id` INT NOT NULL AUTO_INCREMENT COMMENT '自增id',
+        `security` VARCHAR (15) NOT NULL COMMENT '股票代码',
+        `net_profit` DOUBLE DEFAULT NULL COMMENT '净利润',
+        `operating_profit` DOUBLE DEFAULT NULL COMMENT '营业利润',
+        `total_profit` DOUBLE DEFAULT NULL COMMENT '利润总额',
+        `np_parent_company_owners` DOUBLE DEFAULT NULL COMMENT '归属于母公司股东的净利润',
+        `operating_revenue` DOUBLE DEFAULT NULL COMMENT '营业收入',
+        `total_operating_revenue` DOUBLE DEFAULT NULL COMMENT '营业总收入',
+        `total_operating_cost` DOUBLE DEFAULT NULL COMMENT '营业总成本',
+        `basic_eps` DOUBLE DEFAULT NULL COMMENT '基本每股收益',
+        `diluted_eps` DOUBLE DEFAULT NULL COMMENT '稀释每股收益',
+        `date` DATE NOT NULL COMMENT '日期',
+        PRIMARY KEY (`record_id`),
+        UNIQUE `day_income_security_date_index` (`security`, `date`),
+        INDEX `day_income_security_index` (`security`),
+        INDEX `day_income_date_index` (`date`)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT '每日股票利润数据';
+    """
+    engine.execute(create_table_sql)
+
+
+def batch_update_day_income_table(security_list, start_date, end_date):
+    max_return_rows = 2000
+    table_name = "day_income"
+    engine = mysql_connect()
+    create_day_income_table(engine)
+    date_list = get_trade_day_list(start_date=start_date, end_date=end_date)
+    retrieve_index_sql = "select security, date from {}".format(table_name)
+    index_df = pd.read_sql_query(retrieve_index_sql, engine)
+    index_set = set((index_df["security"] + " " + index_df["date"].map(str)).tolist())
+    for date in date_list:
+        batch_list = batchify(security_list, max_return_rows)
+        for batch in batch_list:
+            df = get_income(batch, date)
+            if len(df) == 0:
+                continue
+            concat_index_col = df["security"] + " " + df["date"]
+            keep_row = concat_index_col.apply(lambda x: True if x not in index_set else False)
+            df = df[keep_row]
+            if len(df) == 0:
+                continue
+            df.to_sql(table_name, engine, index=False, if_exists="append")
+
+
 
 if __name__ == "__main__":
     auth(USER_NAME, PASSWORD)
@@ -499,5 +663,5 @@ if __name__ == "__main__":
     # security_list = SECURITY_LIST[:300]
     # security_list = ["603997.XSHG", "600469.XSHG", "600468.XSHG", "600467.XSHG", "600466.XSHG", "600470.XSHG"]
     security_list = ["300015.XSHE", "000002.XSHE", "000022.XSHE", "000012.XSHE", "300016.XSHE"]
-    batch_update_day_sct_rate_table(start_date, end_date)
+    batch_update_day_income_table(security_list, start_date, end_date)
     print()

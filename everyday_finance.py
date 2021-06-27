@@ -31,6 +31,11 @@ def get_valuation(code_list, date):
     return result_df
 
 
+# code_list = ["000002.XSHE", "000012.XSHE", "000022.XSHE", "300015.XSHE", "300016.XSHE"]
+# a1 = get_valuation(code_list, "2018-03-02")
+# print()
+
+
 # 获取单一股票每日财务指标数据
 def get_finance_indicator(code_list, date):
     # https://www.joinquant.com/help/api/help#Stock:%E8%B4%A2%E5%8A%A1%E6%8C%87%E6%A0%87%E6%95%B0%E6%8D%AE
@@ -49,8 +54,33 @@ def get_finance_indicator(code_list, date):
     return result_df
 
 
-if __name__ == "__main__":
-    auth(USER_NAME, PASSWORD)
+# code_list = ["000002.XSHE", "000012.XSHE", "000022.XSHE", "300015.XSHE", "300016.XSHE"]
+# a1 = get_finance_indicator(code_list, "2018-03-02")
+# print()
+
+
+# 获取股票每日财务指标数据
+def get_income(code_list, date):
+    # 净利润、营业利润、利润总额、归属于母公司股东的净利润、营业收入、营业总收入、营业总成本、基本每股收益、稀释每股收益
+    fields = ["net_profit", "operating_profit", "total_profit", "np_parent_company_owners", "operating_revenue", "total_operating_revenue", "total_operating_cost", "basic_eps", "diluted_eps"]
+    table = jq.income
+    cond = jq.income.code.in_(code_list)
+    order = jq.income.code.asc()
+    query = jq.query(table).filter(cond).order_by(order)
+    data_df = jq.get_fundamentals(query, date=date)
+    if data_df.empty:
+        return pd.DataFrame({field: [] for field in ["security"] + fields + ["date"]})
+    # 字段重命名
+    result_df = data_df.rename(columns={"code": "security", "day": "date"})
+    # 调整字段顺序
+    result_df = result_df[["security"] + fields + ["date"]]
+    return result_df
+
+
+# code_list = ["000002.XSHE", "000012.XSHE", "000022.XSHE", "300015.XSHE", "300016.XSHE"]
+# a1 = get_income(code_list, "2018-03-02")
+# print()
+
 
 
 
